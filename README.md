@@ -75,10 +75,17 @@ node app.js
 
 Si todo esta configurado correctamente la aplicación se ejecutará de manera local y se conectará a la base de datos configurada en tu archivo app.js.
 
+## Link del repositorio
+https://github.com/TheJoker1133/ArTours
+
 ## Créditos
 
 Autor: Alejandro Serrano Guzmán
+
 Proyecto: ArTours
+
 Fecha: Octubre 2025
+
 Materia: E-Business / Desarrollo de Aplicaciones Web
+
 Institución: Instituto Tecnológico de Tuxtla Gutiérrez
