@@ -1,6 +1,7 @@
-import app from "../app.js";
+const app = require("../app.js");
 
-const PORT = process.env.PORT ?? 3000;
+const PORT = app.get("port") || 8085;
+
 app.listen(PORT, () => {
-  console.log(`🚀 API escuchando en http://localhost:${PORT}`);
+  console.log(`Servidor ArTours corriendo en puerto ${PORT}`);
 });

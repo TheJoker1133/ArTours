@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>ArTours - Autenticación</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      max-width: 500px; 
+      margin: 20px auto; 
+      background: #f5f5f5; 
+      padding: 20px;
+      border-radius: 10px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    h2 { margin-top: 20px; }
+    form { 
+      background: white; 
+      padding: 20px; 
+      border-radius: 8px; 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+      margin-bottom: 20px;
+    }
+    label { display: block; margin-top: 10px; }
+    input { 
+      width: 100%; 
+      padding: 8px; 
+      margin-top: 5px; 
+      border: 1px solid #ccc; 
+      border-radius: 5px; 
+    }
+    button { 
+      margin-top: 15px; 
+      padding: 10px 15px; 
+      cursor: pointer; 
+      background: #0d3b66; 
+      color: white; 
+      border: none; 
+      border-radius: 5px; 
+    }
+    button:hover {
+      background: #0a2d4d;
+    }
+    .msg { margin-top: 10px; font-size: 0.9em; }
+    .ok { color: green; }
+    .err { color: red; }
+    .tabs { display: flex; gap: 10px; margin-bottom: 10px; }
+    .tabs button { flex: 1; padding: 12px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <h1>Chiapas ArTours - Autenticación</h1>
+
+  <div class="tabs">
+    <button id="btn-tab-login">Iniciar sesión</button>
+    <button id="btn-tab-register">Crear cuenta</button>
+  </div>
+
+  <!-- FORM LOGIN -->
+  <form id="form-login">
+    <h2>Iniciar sesión</h2>
+    <label>Email</label>
+    <input type="email" id="login-email" required>
+
+    <label>Contraseña</label>
+    <input type="password" id="login-password" required>
+
+    <button type="submit">Entrar</button>
+    <div id="login-msg" class="msg"></div>
+  </form>
+
+  <!-- FORM REGISTRO -->
+  <form id="form-register" class="hidden">
+    <h2>Crear cuenta</h2>
+    <label>Nombre</label>
+    <input type="text" id="reg-nombre" required>
+
+    <label>Email</label>
+    <input type="email" id="reg-email" required>
+
+    <label>Contraseña</label>
+    <input type="password" id="reg-password" required>
+
+    <button type="submit">Registrar</button>
+    <div id="reg-msg" class="msg"></div>
+  </form>
+
+  <script>
+    const loginForm = document.getElementById('form-login');
+    const registerForm = document.getElementById('form-register');
+    const loginMsg = document.getElementById('login-msg');
+    const regMsg = document.getElementById('reg-msg');
+
+    const btnTabLogin = document.getElementById('btn-tab-login');
+    const btnTabRegister = document.getElementById('btn-tab-register');
+
+    // Cambiar entre Login / Registro
+    btnTabLogin.addEventListener('click', () => {
+      loginForm.classList.remove('hidden');
+      registerForm.classList.add('hidden');
+    });
+
+    btnTabRegister.addEventListener('click', () => {
+      registerForm.classList.remove('hidden');
+      loginForm.classList.add('hidden');
+    });
+
+    // Helper para mostrar mensajes
+    function showMsg(el, text, ok = true) {
+      el.textContent = text;
+      el.className = 'msg ' + (ok ? 'ok' : 'err');
+    }
+
+    // LOGIN
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      loginMsg.textContent = '';
+
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+
+      const res = await fetch('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showMsg(loginMsg, data.error || 'Error al iniciar sesión', false);
+      } else {
+        showMsg(loginMsg, 'Login exitoso. Bienvenido ' + data.user.nombre);
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1000);
+      }
+    });
+
+    // REGISTRO
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      regMsg.textContent = '';
+
+      const nombre = document.getElementById('reg-nombre').value;
+      const email = document.getElementById('reg-email').value;
+      const password = document.getElementById('reg-password').value;
+
+      const res = await fetch('/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, email, password })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showMsg(regMsg, data.error || 'Error al registrar', false);
+      } else {
+        showMsg(regMsg, 'Cuenta creada. Bienvenido ' + data.user.nombre);
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1000);
+      }
+    });
+  </script>
+
+</body>
+</html>

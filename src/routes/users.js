@@ -1,18 +1,15 @@
-// routes/users.js
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const router = express.Router();
 
-/**
- * GET /api/usuarios
- * Lista todos los usuarios (no expone password_hash)
- */
+// GET /api/usuarios
 router.get('/', (req, res) => {
   req.getConnection((err, conn) => {
     if (err) return res.status(500).json({ error: err.message });
+
     conn.query(
-        'SELECT id, nombre, email, rol, estado, creado_en, actualizado_en FROM usuarios',
-        (err, rows) => {
+      'SELECT id, nombre, email, rol, estado, creado_en, actualizado_en FROM usuarios',
+      (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
       }
@@ -20,13 +17,13 @@ router.get('/', (req, res) => {
   });
 });
 
-/**
- * GET /api/usuarios/:id
- */
+// GET /api/usuarios/:id
 router.get('/:id', (req, res) => {
   const { id } = req.params;
+
   req.getConnection((err, conn) => {
     if (err) return res.status(500).json({ error: err.message });
+
     conn.query(
       'SELECT id, nombre, email, rol, estado, creado_en, actualizado_en FROM usuarios WHERE id = ?',
       [id],
@@ -39,50 +36,65 @@ router.get('/:id', (req, res) => {
   });
 });
 
-/**
- * POST /api/usuarios
- * body: { nombre, email, password, rol? }
- */
-router.post('/', async (req, res) => {
+// POST /api/usuarios
+router.post('/', (req, res) => {
   const { nombre, email, password, rol = 'USER' } = req.body;
+
   if (!nombre || !email || !password) {
     return res.status(400).json({ error: 'nombre, email y password son requeridos' });
   }
-  try {
-    const hash = await bcrypt.hash(password, 10);
-    req.getConnection((err, conn) => {
+
+  req.getConnection((err, conn) => {
+    if (err) return res.status(500).json({ error: err.message });
+
+    conn.query('SELECT id FROM usuarios WHERE email = ?', [email], async (err, rows) => {
       if (err) return res.status(500).json({ error: err.message });
 
-      conn.query('SELECT id FROM usuarios WHERE email = ?', [email], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        if (rows.length > 0) return res.status(409).json({ error: 'El email ya está registrado' });
+      if (rows.length > 0) {
+        return res.status(409).json({ error: 'El email ya está registrado' });
+      }
 
-        const nuevo = { nombre, email, password_hash: hash, rol };
+      try {
+        const hash = await bcrypt.hash(password, 10);
+        const nuevo = {
+          nombre,
+          email,
+          password_hash: hash,
+          rol,
+          estado: 'activo'
+        };
+
         conn.query('INSERT INTO usuarios SET ?', nuevo, (err, result) => {
           if (err) return res.status(500).json({ error: err.message });
-          res.status(201).json({ id: result.insertId, nombre, email, rol, estado: 'activo' });
+
+          res.status(201).json({
+            id: result.insertId,
+            nombre,
+            email,
+            rol,
+            estado: 'activo'
+          });
         });
-      });
+      } catch (e) {
+        res.status(500).json({ error: e.message });
+      }
     });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+  });
 });
 
-/**
- * PUT /api/usuarios/:id
- * body: { nombre?, email?, password?, rol?, estado? }
- */
+// PUT /api/usuarios/:id
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
   const { nombre, email, password, rol, estado } = req.body;
 
   const fields = [];
   const values = [];
+
   if (nombre) { fields.push('nombre = ?'); values.push(nombre); }
   if (email)  { fields.push('email = ?');  values.push(email); }
   if (rol)    { fields.push('rol = ?');    values.push(rol); }
   if (estado) { fields.push('estado = ?'); values.push(estado); }
+
   if (password) {
     const hash = await bcrypt.hash(password, 10);
     fields.push('password_hash = ?');
@@ -97,6 +109,7 @@ router.put('/:id', async (req, res) => {
 
   req.getConnection((err, conn) => {
     if (err) return res.status(500).json({ error: err.message });
+
     conn.query(
       `UPDATE usuarios SET ${fields.join(', ')} WHERE id = ?`,
       values,
@@ -107,32 +120,34 @@ router.put('/:id', async (req, res) => {
           }
           return res.status(500).json({ error: err.message });
         }
-        if (result.affectedRows === 0) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+        if (result.affectedRows === 0) {
+          return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
         res.json({ ok: true });
       }
     );
   });
 });
 
-/**
- * DELETE /api/usuarios/:id
- * Borrado suave -> estado = 'inactivo'
- */
+// DELETE /api/usuarios/:id
 router.delete('/:id', (req, res) => {
   const { id } = req.params;
-  
+
   req.getConnection((err, conn) => {
     if (err) return res.status(500).json({ error: err.message });
-    
+
     conn.query('DELETE FROM usuarios WHERE id = ?', [id], (err, result) => {
       if (err) return res.status(500).json({ error: err.message });
-      if (result.affectedRows === 0)
+
+      if (result.affectedRows === 0) {
         return res.status(404).json({ error: 'Usuario no encontrado' });
-      
-      res.json({ ok: true, message: `Usuario con ID ${id} eliminado permanentemente` });
+      }
+
+      res.json({ ok: true, message: `Usuario con ID ${id} eliminado` });
     });
   });
 });
-
 
 module.exports = router;
