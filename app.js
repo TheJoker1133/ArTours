@@ -1,36 +1,21 @@
-// app.js
-const express = require('express');
-const mysql = require('mysql');
-const myconnection = require('express-myconnection');
-const morgan = require('morgan');
+import express from "express";
+import "dotenv/config";
+import routes from "./src/routes/index.js";
+import { notFound } from "./src/middlewares/notFound.js";
+import { errorHandler } from "./src/middlewares/errorHandler.js";
 
 const app = express();
-app.set('port', process.env.PORT || 8085);
 
-// Necesario para leer JSON del body
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// Logs (opcional)
-app.use(morgan('dev'));
+// Rutas principales
+app.use("/api", routes);
 
-// Conexión a MySQL (ajusta puerto si usas 3307)
-app.use(myconnection(mysql, {
-  host: '127.0.0.1',
-  user: 'ArTours',
-  password: 'Alejandro2025@',
-  database: 'ArToursDB',
-  port: 3306
-}, 'single'));
+// Health root
+app.get("/", (_req, res) => res.json({ ok: true, msg: "API viva" }));
 
-// Rutas
-app.get('/', (req, res) => res.send('ArTours API funcionando'));
+// 404 y errores
+app.use(notFound);
+app.use(errorHandler);
 
-// Monta CRUD de usuarios
-const usersRouter = require('./src/routes/users');
-app.use('/api/usuarios', usersRouter);
-
-// Arranque
-app.listen(app.get('port'), () => {
-  console.log(`Server is running on port ${app.get('port')}`);
-});
+export default app;

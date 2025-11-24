@@ -2,8 +2,11 @@
   "name": "proyecto",
   "version": "1.0.0",
   "description": "",
-  "main": "app.js",
+  "type": "module",
+  "main": "src/server.js",
   "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -11,13 +14,24 @@
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
-    "express-myconnection": "^1.0.4",
-    "morgan": "^1.10.1",
-    "mysql": "^2.18.1",
-    "path": "^0.12.7"
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.15.3",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
+  },
+  "nodemonConfig": {
+    "watch": [
+      "src"
+    ],
+    "ext": "js,json",
+    "ignore": [
+      "node_modules",
+      ".git",
+      ".env"
+    ]
   }
 }

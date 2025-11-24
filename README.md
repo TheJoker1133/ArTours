@@ -1,91 +1,338 @@
-# Proyecto ArTours
+# ChiapasArTours
 
-## Descripción General
-Este proyecto forma parte del desarrollo de la aplicación **ArTours**, una aplicación realizada con **Node.js**, **Express** y **MySQL**.  
-El sistema permite establecer una conexión con una base de datos MySQL para la gestión de información relacionada con la aplicación.
+API base con **Express** usando patrón **MVC** (+ capa de **servicios** y **repositorios**), validación con **Zod**, acceso a datos con **mysql2/promise** y autenticación con **JWT**.
+
+Pensada como boilerplate sencillo para:
+
+- Crear y administrar **clientes**.
+- Realizar **login** con email + contraseña.
+- Proteger rutas mediante **tokens JWT**.
 
 ---
 
-## Estructura del Proyecto
+## 🧱 Stack Tecnológico
 
-```bash
-Proyecto/
-├── app.js
-├── db/
-│   └── ArToursDB.sql
-├── package.json
-└── Readme.md
+- Node.js (ESM)
+- Express 5
+- mysql2/promise (pool + prepared statements)
+- Zod (validación de entrada)
+- bcryptjs (hash de contraseñas)
+- JSON Web Token (jsonwebtoken)
+- Nodemon (desarrollo)
+
+---
+
+## ✅ Requisitos Previos
+
+- **Node.js** ≥ 18
+- **MySQL** 8.x o **MariaDB** equivalente
+- Usuario de MySQL con permisos para:
+  - Crear bases de datos
+  - Crear tablas
+  - Insertar datos
+
+Opcional:
+
+- **MySQL Workbench**, **HeidiSQL** o cualquier otra GUI para ejecutar el script SQL.
+
+---
+
+## 📁 Estructura del Proyecto
+
+```text
+src/
+  app.js
+  server.js
+  routes/
+    index.js
+    auth.routes.js
+    clientes.routes.js
+  controllers/
+    auth.controller.js
+    cliente.controller.js
+  services/
+    auth.service.js
+    cliente.service.js
+  repositories/
+    cliente.repository.js
+  models/
+    auth.model.js
+    cliente.model.js
+  middlewares/
+    auth.js
+    errorHandler.js
+    notFound.js
+  utils/
+    db.js
+
+bd/
+  ArToursDB.sql
+
+.env        # se crea manualmente (no se versiona)
 ```
 
-
 ---
 
-## Requisitos Previos
+## ⚙️ Configuración
 
-Antes de ejecutar el proyecto, asegúrate de tener instalado:
+### 1. Clonar el repositorio
 
-- **Node.js** (versión 18 o superior)
-- **npm** (gestor de paquetes de Node.js)
-- **MySQL Server**
-- **MySQL Workbench** (opcional, para gestionar la base de datos)
+```bash
+git clone <URL_DEL_REPOSITORIO>
+cd <carpeta_del_proyecto>
+```
 
----
-
-## Instalación de Dependencias
-
-Dentro del directorio del proyecto, ejecuta en la terminal:
+### 2. Instalar dependencias
 
 ```bash
 npm install
 ```
-Este comando instalará todas las dependencias listadas en el archivo package.json.
 
-## Para inicial el servidor
+### 3. Crear la base de datos (script `bd/ArToursDB.sql`)
+
+Dentro del proyecto tienes el archivo:
+
+```text
+bd/ArTours.sql
+```
+
+Ese script:
+
+- Crea la base de datos `ArToursDB`
+- Crea la tabla `clientes`
+- Inserta un cliente de prueba con email y contraseña hasheada
+
+#### Opción A: usar CLI de MySQL
+
+Desde la carpeta raíz del proyecto:
 
 ```bash
-node app.js
+mysql -u <tu_usuario> -p < ./bd/ArToursDB.sql
 ```
-## Creación de la Base de Datos
 
-Abre MySQL Workbench o la consola de MySQL.
+Te pedirá la contraseña del usuario de MySQL y ejecutará todo el script.
 
-Dirígete al archivo SQL que se encuentra en db/ArToursDB.sql.
+#### Opción B: usar Workbench / HeidiSQL
 
-Ejecuta el script con el siguiente comando:
+1. Abrir tu cliente (Workbench, HeidiSQL, etc.).
+2. Conectarte al servidor de MySQL.
+3. Abrir el archivo `bd/ArToursDB.sql`.
+4. Ejecutar todo el script.
+
+Al terminar, deberías tener:
+
+- Base de datos: `ArToursDB`
+- Tabla: `clientes`
+- Un registro de cliente demo (con contraseña ya hasheada).
+
+---
+
+### 4. Crear archivo `.env`
+
+En la raíz del proyecto, crea un archivo llamado **`.env`** con contenido similar a:
+
+```env
+# Servidor HTTP
+PORT=3000
+
+# Base de datos MySQL
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_USER=TU_USUARIO
+MYSQL_PASSWORD=TU_PASSWORD
+MYSQL_DB=ArToursDB
+MYSQL_CONN_LIMIT=10
+
+# Autenticación JWT
+JWT_SECRET=UN_SECRETO_LARGO_Y_ALEATORIO_AQUI
+JWT_EXPIRES_IN=1h
+```
+
+> 🔐 **Importante:**  
+> - No subas tu `.env` a GitHub.  
+> - Cambia `JWT_SECRET` por una cadena larga y difícil de adivinar.
+
+---
+
+## 🚀 Ejecución
+
+### Desarrollo (con recarga automática)
+
 ```bash
-SOURCE db/ArToursDB.sql;
-```
-O copia y pega el contenido del archivo dentro de tu cliente MySQL.
-
-Esto creará automáticamente:
-
-La base de datos ArToursDB
-
-El usuario ArTours con contraseña Alejandro2025@
-
-Los permisos necesarios sobre la base de datos
-
-La tabla inicial categorias
-
-## Ejecución del proyecto
-Después de instalar las dependencias y crear la base de datos, inicia el servidor con:
-``` bash
-node app.js
+npm run dev
 ```
 
-Si todo esta configurado correctamente la aplicación se ejecutará de manera local y se conectará a la base de datos configurada en tu archivo app.js.
+La API escuchará (por defecto) en:
 
-## Link del repositorio
-https://github.com/TheJoker1133/ArTours
+```text
+http://localhost:3000/
+```
 
-## Créditos
+### Producción / ejecución simple
 
-Autor: Alejandro Serrano Guzmán
+```bash
+npm start
+# o, según tu configuración:
+node src/server.js
+```
 
-Proyecto: ArTours
+---
 
-Fecha: Octubre 2025
+## 🔌 Endpoints Principales
 
-Materia: E-Business / Desarrollo de Aplicaciones Web
+### Health
 
-Institución: Instituto Tecnológico de Tuxtla Gutiérrez
+- `GET /`  
+  Respuesta rápida para saber si la API está viva.
+
+- `GET /api/health`  
+  Devuelve algo como:
+
+```json
+{
+  "status": "ok",
+  "time": "2025-11-21T..."
+}
+```
+
+---
+
+### Autenticación
+
+#### `POST /api/auth/login`
+
+Permite hacer login con email y contraseña, y devuelve un **JWT**.
+
+**Body JSON:**
+
+```json
+{
+  "email": "demo@example.com",
+  "password": "12345678"
+}
+```
+
+> El usuario `demo@example.com` se crea con el script `bd/ArToursDB.sql`.  
+> La contraseña en texto plano para pruebas es `12345678`.
+
+**Respuesta exitosa:**
+
+```json
+{
+  "token": "JWT_AQUI",
+  "user": {
+    "id": 1,
+    "nombre": "Cliente Demo",
+    "email": "demo@example.com"
+  }
+}
+```
+
+Usa este `token` en las rutas protegidas así:
+
+```http
+Authorization: Bearer JWT_AQUI
+```
+
+---
+
+### Clientes (protegido con JWT)
+
+Todas las rutas de `/api/clientes` requieren encabezado:
+
+```http
+Authorization: Bearer <tu_token_jwt>
+```
+
+#### `GET /api/clientes`
+
+Lista paginada de clientes.
+
+Query params opcionales:
+
+- `limit` (por defecto 50)
+- `offset` (por defecto 0)
+
+Ejemplo:
+
+```http
+GET /api/clientes?limit=10&offset=0
+Authorization: Bearer <token>
+```
+
+Respuesta:
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "nombre": "Cliente Demo",
+      "email": "demo@example.com",
+      "activo": 1,
+      "createdAt": "2025-11-21T...",
+      "updatedAt": "2025-11-21T..."
+    }
+  ],
+  "meta": {
+    "limit": 10,
+    "offset": 0,
+    "count": 1
+  }
+}
+```
+
+#### `GET /api/clientes/:id`
+
+Obtiene un cliente por su ID.
+
+```http
+GET /api/clientes/1
+Authorization: Bearer <token>
+```
+
+#### `POST /api/clientes`
+
+Crea un nuevo cliente.
+
+```http
+POST /api/clientes
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "nombre": "Nuevo Cliente",
+  "email": "nuevo@example.com",
+  "password": "unaClave123",
+  "activo": true
+}
+```
+
+#### `PATCH /api/clientes/:id`
+
+Actualiza parcialmente los datos de un cliente.
+
+```http
+PATCH /api/clientes/1
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "nombre": "Nombre Actualizado"
+}
+```
+
+#### `DELETE /api/clientes/:id`
+
+Elimina un cliente.
+
+```http
+DELETE /api/clientes/1
+Authorization: Bearer <token>
+```
+
+---
+
+## 👤 Autor
+
+Alejandro Serrano Guzmán
