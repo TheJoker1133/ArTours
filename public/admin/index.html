@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel Admin - Chiapas ArTours</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; }
+    h1 { text-align: center; }
+    ul { list-style: none; padding: 0; }
+    li { margin: 10px 0; }
+    a { text-decoration: none; color: #0d3b66; }
+    a:hover { text-decoration: underline; }
+    .top { display: flex; justify-content: space-between; align-items: center; }
+    button { padding: 6px 10px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <h1>Panel de Administración - Chiapas ArTours</h1>
+    <button id="btn-logout">Cerrar sesión</button>
+  </div>
+
+  <p>Selecciona un catálogo para administrar:</p>
+<ul>
+  <li><a href="/admin/admin-categorias.html">Catálogo de Categorías</a></li>
+  <li><a href="/admin/admin-productos.html">Catálogo de Productos</a></li>
+  <li><a href="/admin/admin-clientes.html">Catálogo de Clientes / Usuarios</a></li>
+</ul>
+
+
+  <script>
+    // Si no hay token, regresar al login
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/auth.html';
+    }
+
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+      try {
+        await fetch('/auth/logout', { method: 'POST' });
+      } catch (e) {
+        console.error(e);
+      } finally {
+        localStorage.removeItem('token');
+        window.location.href = '/auth.html';
+      }
+    });
+  </script>
+</body>
+</html>

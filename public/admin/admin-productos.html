@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - Productos/Tours</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 1000px; margin: 20px auto; }
+    h1 { text-align: center; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #eee; }
+    form { margin-top: 20px; border: 1px solid #ccc; padding: 15px; border-radius: 5px; }
+    label { display: block; margin-top: 10px; }
+    input, textarea, select { width: 100%; padding: 8px; margin-top: 5px; }
+    button { margin-top: 10px; padding: 8px 12px; cursor: pointer; }
+    .actions button { margin-right: 5px; }
+    a { text-decoration: none; color: #0d3b66; }
+  </style>
+</head>
+<body>
+  <h1>Administrar Productos / Tours</h1>
+  <p><a href="/admin/">← Volver al panel</a></p>
+
+  <table id="tabla-productos">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Precio</th>
+        <th>Ubicación</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- JS -->
+    </tbody>
+  </table>
+
+  <h2 id="form-title">Crear / Editar Producto</h2>
+  <form id="form-producto">
+    <input type="hidden" id="prod-id">
+
+    <label>Nombre</label>
+    <input type="text" id="prod-nombre" required>
+
+    <label>Descripción corta</label>
+    <input type="text" id="prod-desccorta">
+
+    <label>Descripción</label>
+    <textarea id="prod-desc"></textarea>
+
+    <label>Precio</label>
+    <input type="number" step="0.01" id="prod-precio" required>
+
+    <label>Duración (minutos)</label>
+    <input type="number" id="prod-duracion">
+
+    <label>Ubicación</label>
+    <input type="text" id="prod-ubicacion">
+
+    <label>Capacidad</label>
+    <input type="number" id="prod-capacidad">
+
+    <label>Estado</label>
+    <select id="prod-estado">
+      <option value="activo">activo</option>
+      <option value="inactivo">inactivo</option>
+    </select>
+
+    <label>ID Categoría</label>
+    <input type="number" id="prod-idcategoria" required>
+
+    <button type="submit">Guardar</button>
+    <button type="button" id="btn-cancelar">Cancelar</button>
+  </form>
+
+  <script>
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/auth.html';
+    }
+
+    const tablaBody = document.querySelector('#tabla-productos tbody');
+    const form = document.getElementById('form-producto');
+    const formTitle = document.getElementById('form-title');
+
+    const inputId = document.getElementById('prod-id');
+    const inputNombre = document.getElementById('prod-nombre');
+    const inputDescCorta = document.getElementById('prod-desccorta');
+    const inputDesc = document.getElementById('prod-desc');
+    const inputPrecio = document.getElementById('prod-precio');
+    const inputDuracion = document.getElementById('prod-duracion');
+    const inputUbicacion = document.getElementById('prod-ubicacion');
+    const inputCapacidad = document.getElementById('prod-capacidad');
+    const selectEstado = document.getElementById('prod-estado');
+    const inputIdCategoria = document.getElementById('prod-idcategoria');
+    const btnCancelar = document.getElementById('btn-cancelar');
+
+    async function cargarProductos() {
+      tablaBody.innerHTML = '<tr><td colspan="6">Cargando...</td></tr>';
+      try {
+        const res = await fetch('/api/productos', {
+          headers: {
+            'Authorization': 'Bearer ' + token
+          }
+        });
+        if (!res.ok) throw new Error('Error al obtener productos');
+        const data = await res.json();
+        renderTabla(data);
+      } catch (e) {
+        tablaBody.innerHTML = '<tr><td colspan="6">Error: ' + e.message + '</td></tr>';
+      }
+    }
+
+    function renderTabla(productos) {
+      if (!productos.length) {
+        tablaBody.innerHTML = '<tr><td colspan="6">Sin registros</td></tr>';
+        return;
+      }
+
+      tablaBody.innerHTML = '';
+      productos.forEach(prod => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${prod.id}</td>
+          <td>${prod.nombre}</td>
+          <td>${prod.precio}</td>
+          <td>${prod.ubicacion || ''}</td>
+          <td>${prod.estado}</td>
+          <td class="actions">
+            <button type="button" data-id="${prod.id}" data-action="edit">Editar</button>
+            <button type="button" data-id="${prod.id}" data-action="delete">Eliminar</button>
+          </td>
+        `;
+        tablaBody.appendChild(tr);
+      });
+    }
+
+    tablaBody.addEventListener('click', async (e) => {
+      const btn = e.target;
+      if (btn.tagName !== 'BUTTON') return;
+      const id = btn.getAttribute('data-id');
+      const action = btn.getAttribute('data-action');
+
+      if (action === 'edit') {
+        editarProducto(id);
+      } else if (action === 'delete') {
+        if (confirm('¿Eliminar este producto?')) {
+          await eliminarProducto(id);
+          cargarProductos();
+        }
+      }
+    });
+
+    async function editarProducto(id) {
+      const res = await fetch('/api/productos/' + id, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!res.ok) {
+        alert('Error al obtener el producto');
+        return;
+      }
+      const prod = await res.json();
+      inputId.value = prod.id;
+      inputNombre.value = prod.nombre;
+      inputDescCorta.value = prod.descripcion_corta || '';
+      inputDesc.value = prod.descripcion || '';
+      inputPrecio.value = prod.precio;
+      inputDuracion.value = prod.duracion_min || '';
+      inputUbicacion.value = prod.ubicacion || '';
+      inputCapacidad.value = prod.capacidad || '';
+      selectEstado.value = prod.estado || 'activo';
+      inputIdCategoria.value = prod.id_categoria || '';
+      formTitle.textContent = 'Editar Producto (ID ' + prod.id + ')';
+    }
+
+    async function eliminarProducto(id) {
+      const res = await fetch('/api/productos/' + id, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert('Error al eliminar: ' + (data.error || res.statusText));
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = inputId.value;
+      const payload = {
+        nombre: inputNombre.value,
+        descripcion_corta: inputDescCorta.value,
+        descripcion: inputDesc.value,
+        precio: parseFloat(inputPrecio.value),
+        duracion_min: inputDuracion.value ? parseInt(inputDuracion.value) : null,
+        ubicacion: inputUbicacion.value,
+        capacidad: inputCapacidad.value ? parseInt(inputCapacidad.value) : null,
+        estado: selectEstado.value,
+        id_categoria: parseInt(inputIdCategoria.value)
+      };
+
+      const url = id ? '/api/productos/' + id : '/api/productos';
+      const method = id ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        alert('Error al guardar: ' + (data.error || res.statusText));
+      } else {
+        alert('Guardado correctamente');
+        limpiarFormulario();
+        cargarProductos();
+      }
+    });
+
+    function limpiarFormulario() {
+      inputId.value = '';
+      inputNombre.value = '';
+      inputDescCorta.value = '';
+      inputDesc.value = '';
+      inputPrecio.value = '';
+      inputDuracion.value = '';
+      inputUbicacion.value = '';
+      inputCapacidad.value = '';
+      selectEstado.value = 'activo';
+      inputIdCategoria.value = '';
+      formTitle.textContent = 'Crear / Editar Producto';
+    }
+
+    btnCancelar.addEventListener('click', () => {
+      limpiarFormulario();
+    });
+
+    cargarProductos();
+  </script>
+</body>
+</html>

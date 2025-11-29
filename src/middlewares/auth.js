@@ -1,14 +1,17 @@
-// middlewares/auth.js
-import jwt from "jsonwebtoken";
+// src/middlewares/auth.js
+const jwt = require('jsonwebtoken');
 
-const { JWT_SECRET } = process.env;
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-artours';
 
-export const authRequired = (req, res, next) => {
+function authRequired(req, res, next) {
   const header = req.headers.authorization || "";
   const [type, token] = header.split(" ");
 
   if (type !== "Bearer" || !token) {
-    return res.status(401).json({ error: "UNAUTHORIZED", message: "Token requerido" });
+    return res.status(401).json({ 
+      error: "UNAUTHORIZED", 
+      message: "Token requerido" 
+    });
   }
 
   try {
@@ -20,6 +23,11 @@ export const authRequired = (req, res, next) => {
     };
     next();
   } catch (e) {
-    return res.status(401).json({ error: "UNAUTHORIZED", message: "Token inválido o expirado" });
+    return res.status(401).json({ 
+      error: "UNAUTHORIZED", 
+      message: "Token inválido o expirado" 
+    });
   }
-};
+}
+
+module.exports = { authRequired };

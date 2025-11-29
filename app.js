@@ -51,5 +51,12 @@ app.use('/api/usuarios', usersRouter);
 const authRouter = require('./src/routes/auth');
 app.use('/auth', authRouter);
 
+const categoriasRoutes = require('./src/routes/categoriasRoutes');
+const productosRoutes = require('./src/routes/productosRoutes');
+
+app.use('/api/categorias', categoriasRoutes);
+app.use('/api/productos', productosRoutes);
+
+
 // Exportar app para server.js
 module.exports = app;

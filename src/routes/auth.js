@@ -1,59 +1,14 @@
+// src/routes/auth.js
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const router = express.Router();
 
-// POST /auth/register
-router.post('/register', (req, res) => {
-  const { nombre, email, password } = req.body;
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-artours';
 
-  if (!nombre || !email || !password) {
-    return res.status(400).json({ error: 'nombre, email y password son obligatorios' });
-  }
+// ... (register igual que ya lo tenías, si quieres)
+// Cambiamos SOLO el login:
 
-  req.getConnection((err, conn) => {
-    if (err) return res.status(500).json({ error: err.message });
-
-    conn.query('SELECT id FROM usuarios WHERE email = ?', [email], async (err, rows) => {
-      if (err) return res.status(500).json({ error: err.message });
-
-      if (rows.length > 0) {
-        return res.status(409).json({ error: 'El email ya está registrado' });
-      }
-
-      try {
-        const hash = await bcrypt.hash(password, 10);
-        const nuevoUsuario = {
-          nombre,
-          email,
-          password_hash: hash,
-          rol: 'USER',
-          estado: 'activo'
-        };
-
-        conn.query('INSERT INTO usuarios SET ?', nuevoUsuario, (err, result) => {
-          if (err) return res.status(500).json({ error: err.message });
-
-          req.session.user = {
-            id: result.insertId,
-            nombre,
-            email,
-            rol: 'USER'
-          };
-
-          res.status(201).json({
-            ok: true,
-            message: 'Usuario registrado y sesión iniciada',
-            user: req.session.user
-          });
-        });
-      } catch (e) {
-        res.status(500).json({ error: e.message });
-      }
-    });
-  });
-});
-
-// POST /auth/login
 router.post('/login', (req, res) => {
   const { email, password } = req.body;
 
@@ -81,6 +36,7 @@ router.post('/login', (req, res) => {
           return res.status(401).json({ error: 'Credenciales inválidas' });
         }
 
+        // Sesión (para tu auth.html en el navegador)
         req.session.user = {
           id: usuario.id,
           nombre: usuario.nombre,
@@ -88,30 +44,24 @@ router.post('/login', (req, res) => {
           rol: usuario.rol
         };
 
+        // 🔥 Token JWT (para autenticación de backend tipo Postman / frontend SPA)
+        const token = jwt.sign(
+          {
+            sub: usuario.id,
+            email: usuario.email
+          },
+          JWT_SECRET,
+          { expiresIn: '1h' }
+        );
+
         res.json({
           ok: true,
           message: 'Login exitoso',
-          user: req.session.user
+          user: req.session.user,
+          token // 👈 aquí viene el Bearer que vas a usar en /api/categorias, etc.
         });
       }
     );
-  });
-});
-
-// GET /auth/me
-router.get('/me', (req, res) => {
-  if (!req.session.user) {
-    return res.status(401).json({ loggedIn: false });
-  }
-  res.json({ loggedIn: true, user: req.session.user });
-});
-
-// POST /auth/logout
-router.post('/logout', (req, res) => {
-  req.session.destroy(err => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.clearCookie('connect.sid');
-    res.json({ ok: true, message: 'Sesión cerrada' });
   });
 });
 
