@@ -2,21 +2,526 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Chiapas ArTours</title>
+  <title>Chiapas ArTours - Catálogo y Carrito</title>
   <style>
-    body { 
-      background: #0d3b66; 
-      color: white; 
-      font-family: Arial, sans-serif; 
-      text-align: center; 
-      margin-top: 100px; 
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f5f5f5;
     }
-    h1 {
-      font-size: 2.5rem;
+    header {
+      background: #0d3b66;
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+    header nav a {
+      color: white;
+      margin-left: 15px;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    main {
+      padding: 20px;
+    }
+    .tabs {
+      margin-bottom: 15px;
+    }
+    .tabs button {
+      padding: 8px 12px;
+      border: none;
+      border-bottom: 2px solid transparent;
+      background: transparent;
+      cursor: pointer;
+      font-size: 14px;
+      margin-right: 10px;
+    }
+    .tabs button.active {
+      border-bottom-color: #0d3b66;
+      color: #0d3b66;
+      font-weight: bold;
+    }
+    .seccion {
+      display: none;
+    }
+    .seccion.activa {
+      display: block;
+    }
+    .catalogo, .carrito {
+      background: white;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .catalogo h2, .carrito h2 {
+      margin-top: 0;
+    }
+    .categoria-bloque {
+      margin-bottom: 25px;
+    }
+    .categoria-bloque h3 {
+      margin-bottom: 8px;
+      border-left: 4px solid #0d3b66;
+      padding-left: 8px;
+    }
+    .productos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 15px;
+    }
+    .producto-card {
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 10px;
+      background: #fafafa;
+    }
+    .producto-card h4 {
+      margin: 0 0 5px;
+    }
+    .producto-card p {
+      margin: 5px 0;
+      font-size: 14px;
+    }
+    .producto-card button {
+      margin-top: 5px;
+      padding: 5px 10px;
+      background: #0d3b66;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .carrito table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .carrito th, .carrito td {
+      border: 1px solid #ddd;
+      padding: 5px;
+      text-align: left;
+    }
+    .carrito tfoot td {
+      font-weight: bold;
+    }
+    .btn-sm {
+      padding: 3px 6px;
+      font-size: 11px;
+    }
+    .acciones {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+    }
+    .acciones button {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .btn-primario {
+      background: #0d3b66;
+      color: white;
+    }
+    .btn-secundario {
+      background: #ccc;
+      color: #333;
+    }
+    .msg {
+      margin-top: 8px;
+      font-size: 13px;
+    }
+    .ok { color: green; }
+    .err { color: red; }
+    .datos-tour {
+      margin-top: 10px;
+      font-size: 13px;
+    }
+    .datos-tour label {
+      display: block;
+      margin-top: 5px;
+    }
+    .datos-tour input, .datos-tour select, .datos-tour textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 4px;
+      font-size: 13px;
+      margin-top: 2px;
+    }
+    .datos-tour textarea {
+      resize: vertical;
+      min-height: 40px;
     }
   </style>
 </head>
 <body>
-  <h1>Bienvenido a Chiapas ArTours</h1>
+  <header>
+    <h1>Chiapas ArTours - Bienvenido</h1>
+    <nav>
+      <a href="/">Inicio</a>
+      <a href="/mis-pedidos.html">Mis pedidos</a>
+      <a href="/auth.html">Login / Registro</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="tabs">
+      <button id="tab-tours" class="active">Tours</button>
+      <button id="tab-carrito">Carrito</button>
+    </div>
+
+    <!-- Sección Tours -->
+    <section id="seccion-tours" class="seccion activa">
+      <div class="catalogo">
+        <h2>Tours disponibles por categoría</h2>
+        <div id="productos-msg" class="msg"></div>
+        <div id="productos-container">
+          <!-- Bloques de categorías con sus tours -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Sección Carrito -->
+    <section id="seccion-carrito" class="seccion">
+      <aside class="carrito">
+        <h2>Carrito</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Tour</th>
+              <th>Cant.</th>
+              <th>Precio</th>
+              <th>Subtotal</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="carrito-body">
+            <tr><td colspan="5">Carrito vacío</td></tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3">Total:</td>
+              <td colspan="2" id="carrito-total">$0.00</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div class="datos-tour">
+          <h3>Datos del tour</h3>
+          <label>Fecha del tour
+            <input type="date" id="fecha-tour">
+          </label>
+          <label>Hora del tour (opcional)
+            <input type="time" id="hora-tour">
+          </label>
+          <label>Número de personas
+            <input type="number" id="num-personas" min="1" value="1">
+          </label>
+          <label>Método de pago
+            <select id="metodo-pago">
+              <option value="">Selecciona...</option>
+              <option value="efectivo">Efectivo</option>
+              <option value="tarjeta">Tarjeta</option>
+              <option value="transferencia">Transferencia</option>
+            </select>
+          </label>
+          <label>Notas (opcional)
+            <textarea id="notas" placeholder="Comentarios especiales, punto de encuentro, etc."></textarea>
+          </label>
+        </div>
+
+        <div class="acciones">
+          <button id="btn-vaciar" class="btn-secundario">Vaciar carrito</button>
+          <button id="btn-pedido" class="btn-primario">Realizar pedido</button>
+        </div>
+        <div id="carrito-msg" class="msg"></div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const token = localStorage.getItem('token');
+
+    // Tabs
+    const tabTours = document.getElementById('tab-tours');
+    const tabCarrito = document.getElementById('tab-carrito');
+    const seccionTours = document.getElementById('seccion-tours');
+    const seccionCarrito = document.getElementById('seccion-carrito');
+
+    function activarTab(tab) {
+      if (tab === 'tours') {
+        tabTours.classList.add('active');
+        tabCarrito.classList.remove('active');
+        seccionTours.classList.add('activa');
+        seccionCarrito.classList.remove('activa');
+      } else {
+        tabCarrito.classList.add('active');
+        tabTours.classList.remove('active');
+        seccionCarrito.classList.add('activa');
+        seccionTours.classList.remove('activa');
+      }
+    }
+
+    tabTours.addEventListener('click', () => activarTab('tours'));
+    tabCarrito.addEventListener('click', () => activarTab('carrito'));
+
+    // Elementos del DOM
+    const productosContainer = document.getElementById('productos-container');
+    const productosMsg = document.getElementById('productos-msg');
+
+    const carritoBody = document.getElementById('carrito-body');
+    const carritoTotal = document.getElementById('carrito-total');
+    const carritoMsg = document.getElementById('carrito-msg');
+    const btnVaciar = document.getElementById('btn-vaciar');
+    const btnPedido = document.getElementById('btn-pedido');
+
+    const inputFechaTour = document.getElementById('fecha-tour');
+    const inputHoraTour = document.getElementById('hora-tour');
+    const inputNumPersonas = document.getElementById('num-personas');
+    const selectMetodoPago = document.getElementById('metodo-pago');
+    const inputNotas = document.getElementById('notas');
+
+    let carrito = [];
+
+    function mostrarMsg(el, texto, ok = true) {
+      el.textContent = texto;
+      el.className = 'msg ' + (ok ? 'ok' : 'err');
+    }
+
+    // Cargar productos y agrupar por categoría
+    async function cargarProductos() {
+      productosMsg.textContent = 'Cargando productos...';
+      try {
+        const res = await fetch('/api/productos/public');
+
+        if (!res.ok) {
+          const txt = await res.text();
+          console.error('Respuesta catálogo:', res.status, txt);
+          throw new Error(`Error catálogo (${res.status})`);
+        }
+
+        const data = await res.json();
+        console.log('Productos cargados:', data);
+
+        if (!Array.isArray(data) || data.length === 0) {
+          productosContainer.innerHTML = '';
+          productosMsg.textContent = 'No hay productos activos.';
+          return;
+        }
+
+        productosMsg.textContent = '';
+        renderProductosPorCategoria(data);
+      } catch (e) {
+        mostrarMsg(productosMsg, e.message, false);
+      }
+    }
+
+    function renderProductosPorCategoria(productos) {
+      productosContainer.innerHTML = '';
+
+      const grupos = {};
+      productos.forEach(p => {
+        const nombreCat = p.categoria_nombre || 'Otros';
+        if (!grupos[nombreCat]) grupos[nombreCat] = [];
+        grupos[nombreCat].push(p);
+      });
+
+      Object.keys(grupos).forEach(nombreCat => {
+        const bloque = document.createElement('div');
+        bloque.className = 'categoria-bloque';
+
+        const titulo = document.createElement('h3');
+        titulo.textContent = nombreCat;
+        bloque.appendChild(titulo);
+
+        const grid = document.createElement('div');
+        grid.className = 'productos-grid';
+
+        grupos[nombreCat].forEach(p => {
+          const card = document.createElement('div');
+          card.className = 'producto-card';
+          card.innerHTML = `
+            <h4>${p.nombre}</h4>
+            <p>${p.descripcion_corta || ''}</p>
+            <p><strong>$${Number(p.precio).toFixed(2)}</strong></p>
+            <button data-id="${p.id}" data-nombre="${p.nombre}" data-precio="${p.precio}">
+              Agregar al carrito
+            </button>
+          `;
+          grid.appendChild(card);
+        });
+
+        bloque.appendChild(grid);
+        productosContainer.appendChild(bloque);
+      });
+
+      // Evento de agregar al carrito
+      productosContainer.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+          const id = parseInt(e.target.getAttribute('data-id'));
+          const nombre = e.target.getAttribute('data-nombre');
+          const precio = parseFloat(e.target.getAttribute('data-precio'));
+          agregarAlCarrito(id, nombre, precio);
+          activarTab('carrito');
+        }
+      }, { once: true });
+    }
+
+    function agregarAlCarrito(id_producto, nombre, precio) {
+      const existente = carrito.find(item => item.id_producto === id_producto);
+      if (existente) {
+        existente.cantidad += 1;
+      } else {
+        carrito.push({
+          id_producto,
+          nombre,
+          precio,
+          cantidad: 1
+        });
+      }
+      renderCarrito();
+    }
+
+    function renderCarrito() {
+      if (carrito.length === 0) {
+        carritoBody.innerHTML = '<tr><td colspan="5">Carrito vacío</td></tr>';
+        carritoTotal.textContent = '$0.00';
+        return;
+      }
+
+      carritoBody.innerHTML = '';
+      let total = 0;
+
+      carrito.forEach((item, index) => {
+        const subtotal = item.cantidad * item.precio;
+        total += subtotal;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.nombre}</td>
+          <td>${item.cantidad}</td>
+          <td>$${item.precio.toFixed(2)}</td>
+          <td>$${subtotal.toFixed(2)}</td>
+          <td>
+            <button class="btn-sm" data-index="${index}" data-action="mas">+</button>
+            <button class="btn-sm" data-index="${index}" data-action="menos">-</button>
+            <button class="btn-sm" data-index="${index}" data-action="borrar">x</button>
+          </td>
+        `;
+        carritoBody.appendChild(tr);
+      });
+
+      carritoTotal.textContent = '$' + total.toFixed(2);
+
+      carritoBody.onclick = (e) => {
+        const btn = e.target;
+        if (btn.tagName !== 'BUTTON') return;
+        const index = parseInt(btn.getAttribute('data-index'));
+        const action = btn.getAttribute('data-action');
+        if (action === 'mas') {
+          carrito[index].cantidad += 1;
+        } else if (action === 'menos') {
+          carrito[index].cantidad -= 1;
+          if (carrito[index].cantidad <= 0) {
+            carrito.splice(index, 1);
+          }
+        } else if (action === 'borrar') {
+          carrito.splice(index, 1);
+        }
+        renderCarrito();
+      };
+    }
+
+    btnVaciar.addEventListener('click', () => {
+      carrito = [];
+      renderCarrito();
+      carritoMsg.textContent = '';
+    });
+
+    btnPedido.addEventListener('click', async () => {
+      if (carrito.length === 0) {
+        mostrarMsg(carritoMsg, 'El carrito está vacío', false);
+        return;
+      }
+
+      if (!token) {
+        mostrarMsg(carritoMsg, 'Debes iniciar sesión para realizar un pedido', false);
+        setTimeout(() => {
+          window.location.href = '/auth.html';
+        }, 1500);
+        return;
+      }
+
+      const fecha_tour = inputFechaTour.value;
+      const hora_tour = inputHoraTour.value || null;
+      const num_personas = inputNumPersonas.value;
+      const metodo_pago = selectMetodoPago.value || null;
+      const notas = inputNotas.value || null;
+
+      if (!fecha_tour) {
+        mostrarMsg(carritoMsg, 'La fecha del tour es obligatoria', false);
+        return;
+      }
+
+      if (!num_personas || parseInt(num_personas) <= 0) {
+        mostrarMsg(carritoMsg, 'Indica cuántas personas asistirán', false);
+        return;
+      }
+
+      const payload = {
+        fecha_tour,
+        hora_tour,
+        num_personas,
+        metodo_pago,
+        notas,
+        items: carrito.map(it => ({
+          id_producto: it.id_producto,
+          nombre: it.nombre,
+          precio: it.precio,
+          cantidad: it.cantidad
+        }))
+      };
+
+      try {
+        const res = await fetch('/api/ordenes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Error al crear pedido');
+        }
+
+        mostrarMsg(
+          carritoMsg,
+          `Pedido #${data.id_orden} creado por un total de $${data.total}`,
+          true
+        );
+        carrito = [];
+        renderCarrito();
+        inputNotas.value = '';
+      } catch (e) {
+        mostrarMsg(carritoMsg, e.message, false);
+      }
+    });
+
+    // Cargar productos al entrar
+    cargarProductos();
+  </script>
 </body>
 </html>

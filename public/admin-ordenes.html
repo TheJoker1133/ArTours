@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel Admin - Pedidos</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f5f5f5;
+    }
+    header {
+      background: #0d3b66;
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+    header nav a {
+      color: white;
+      margin-left: 15px;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    main {
+      padding: 20px;
+    }
+    .filtros {
+      background: white;
+      padding: 10px 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      font-size: 13px;
+    }
+    .filtros label {
+      display: flex;
+      flex-direction: column;
+      font-size: 12px;
+    }
+    .filtros input, .filtros select {
+      padding: 4px;
+      font-size: 13px;
+      min-width: 140px;
+    }
+    .filtros button {
+      padding: 6px 10px;
+      border: none;
+      border-radius: 4px;
+      background: #0d3b66;
+      color: white;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .card h2 {
+      margin-top: 0;
+      font-size: 16px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      text-transform: uppercase;
+      margin-left: 5px;
+    }
+    .badge-pendiente { background: #ffcc00; color: #333; }
+    .badge-confirmada { background: #4caf50; color: white; }
+    .badge-pagada { background: #2196f3; color: white; }
+    .badge-cancelada { background: #f44336; color: white; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 4px;
+      text-align: left;
+    }
+    .msg {
+      margin-top: 10px;
+      font-size: 13px;
+    }
+    .ok { color: green; }
+    .err { color: red; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Panel Admin - Pedidos</h1>
+    <nav>
+      <a href="/admin-ordenes.html">Pedidos</a>
+      <a href="/admin/">Panel</a>
+      <a href="/auth.html">Login / Registro</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="filtros">
+      <label>
+        Estado
+        <select id="filtro-estado">
+          <option value="">Todos</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="confirmada">Confirmada</option>
+          <option value="pagada">Pagada</option>
+          <option value="cancelada">Cancelada</option>
+        </select>
+      </label>
+      <label>
+        Email contiene
+        <input type="text" id="filtro-email" placeholder="cliente@correo.com">
+      </label>
+      <label>
+        ID pedido
+        <input type="number" id="filtro-id" min="1">
+      </label>
+      <button id="btn-aplicar">Aplicar filtros</button>
+    </div>
+
+    <div id="mensaje" class="msg"></div>
+    <div id="contenedor-pedidos"></div>
+  </main>
+
+  <script>
+    const token = localStorage.getItem('token');
+    const mensaje = document.getElementById('mensaje');
+    const contenedor = document.getElementById('contenedor-pedidos');
+
+    const filtroEstado = document.getElementById('filtro-estado');
+    const filtroEmail = document.getElementById('filtro-email');
+    const filtroId = document.getElementById('filtro-id');
+    const btnAplicar = document.getElementById('btn-aplicar');
+
+    let todasLasOrdenes = [];
+
+    function mostrarMsg(texto, ok = true) {
+      mensaje.textContent = texto;
+      mensaje.className = 'msg ' + (ok ? 'ok' : 'err');
+    }
+
+    function badgeClase(estado) {
+      switch (estado) {
+        case 'pendiente': return 'badge badge-pendiente';
+        case 'confirmada': return 'badge badge-confirmada';
+        case 'pagada': return 'badge badge-pagada';
+        case 'cancelada': return 'badge badge-cancelada';
+        default: return 'badge';
+      }
+    }
+
+    async function cargarOrdenes() {
+      if (!token) {
+        mostrarMsg('Debes iniciar sesión como admin para ver todos los pedidos', false);
+        setTimeout(() => {
+          window.location.href = '/auth.html';
+        }, 1500);
+        return;
+      }
+
+      mostrarMsg('Cargando pedidos...');
+
+      try {
+        const res = await fetch('/api/ordenes', {
+          headers: {
+            'Authorization': 'Bearer ' + token
+          }
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          // Si el backend responde FORBIDDEN es que el usuario no es admin
+          if (res.status === 403) {
+            throw new Error('No tienes permisos de administrador para ver esta sección.');
+          }
+          throw new Error(data.error || 'Error al cargar pedidos');
+        }
+
+        if (!Array.isArray(data) || data.length === 0) {
+          mostrarMsg('No hay pedidos registrados aún.', true);
+          contenedor.innerHTML = '';
+          return;
+        }
+
+        todasLasOrdenes = data;
+        mostrarMsg(`Se cargaron ${data.length} pedidos.`, true);
+        aplicarFiltros();
+      } catch (e) {
+        mostrarMsg(e.message, false);
+      }
+    }
+
+    function aplicarFiltros() {
+      let filtradas = [...todasLasOrdenes];
+
+      const estado = filtroEstado.value.trim();
+      const email = filtroEmail.value.trim().toLowerCase();
+      const id = filtroId.value.trim();
+
+      if (estado) {
+        filtradas = filtradas.filter(o => o.estado === estado);
+      }
+
+      if (email) {
+        filtradas = filtradas.filter(o => 
+          (o.usuario_email || '').toLowerCase().includes(email)
+        );
+      }
+
+      if (id) {
+        const idNum = parseInt(id);
+        if (!isNaN(idNum)) {
+          filtradas = filtradas.filter(o => o.id === idNum);
+        }
+      }
+
+      renderPedidos(filtradas);
+    }
+
+    btnAplicar.addEventListener('click', aplicarFiltros);
+
+    function renderPedidos(pedidos) {
+      contenedor.innerHTML = '';
+
+      if (pedidos.length === 0) {
+        const p = document.createElement('p');
+        p.textContent = 'No hay pedidos que coincidan con los filtros.';
+        contenedor.appendChild(p);
+        return;
+      }
+
+      pedidos.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const estadoBadge = `<span class="${badgeClase(p.estado)}">${p.estado}</span>`;
+
+        card.innerHTML = `
+          <h2>Pedido #${p.id} ${estadoBadge}</h2>
+          <p><strong>Cliente:</strong> ${p.usuario_email || '(sin correo)'}</p>
+          <p><strong>Fecha de creación:</strong> ${new Date(p.creado_en).toLocaleString()}</p>
+          <p><strong>Fecha tour:</strong> ${p.fecha_tour || '-'} ${p.hora_tour || ''}</p>
+          <p><strong>Personas:</strong> ${p.num_personas}</p>
+          <p><strong>Método de pago:</strong> ${p.metodo_pago || '-'}</p>
+          <p><strong>Total:</strong> $${Number(p.total).toFixed(2)}</p>
+          ${p.notas ? `<p><strong>Notas:</strong> ${p.notas}</p>` : ''}
+        `;
+
+        if (Array.isArray(p.items) && p.items.length > 0) {
+          const tabla = document.createElement('table');
+          tabla.innerHTML = `
+            <thead>
+              <tr>
+                <th>Tour</th>
+                <th>Cant.</th>
+                <th>Precio</th>
+                <th>Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${p.items.map(it => `
+                <tr>
+                  <td>${it.nombre}</td>
+                  <td>${it.cantidad}</td>
+                  <td>$${Number(it.precio_unitario).toFixed(2)}</td>
+                  <td>$${(Number(it.precio_unitario) * it.cantidad).toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          `;
+          card.appendChild(tabla);
+        }
+
+        contenedor.appendChild(card);
+      });
+    }
+
+    cargarOrdenes();
+  </script>
+</body>
+</html>

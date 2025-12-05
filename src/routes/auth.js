@@ -48,7 +48,8 @@ router.post('/login', (req, res) => {
         const token = jwt.sign(
           {
             sub: usuario.id,
-            email: usuario.email
+            email: usuario.email,
+            rol: usuario.rol 
           },
           JWT_SECRET,
           { expiresIn: '1h' }
@@ -58,7 +59,7 @@ router.post('/login', (req, res) => {
           ok: true,
           message: 'Login exitoso',
           user: req.session.user,
-          token // 👈 aquí viene el Bearer que vas a usar en /api/categorias, etc.
+          token 
         });
       }
     );

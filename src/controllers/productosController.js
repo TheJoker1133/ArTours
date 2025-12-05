@@ -129,3 +129,33 @@ exports.remove = (req, res) => {
     res.json({ ok: true });
   });
 };
+
+exports.publicList = (req, res) => {
+  req.getConnection((err, conn) => {
+    if (err) {
+      console.error('Error conexión publicList productos:', err);
+      return res.status(500).json({ error: err.message });
+    }
+
+    const sql = `
+      SELECT 
+        p.id,
+        p.nombre,
+        p.descripcion_corta,
+        p.precio,
+        p.id_categoria,
+        c.nombre AS categoria_nombre
+      FROM productos p
+      LEFT JOIN categorias c ON c.id = p.id_categoria
+      WHERE p.estado = 'activo'
+    `;
+
+    conn.query(sql, (err, rows) => {
+      if (err) {
+        console.error('Error query publicList productos:', err);
+        return res.status(500).json({ error: err.message });
+      }
+      res.json(rows);
+    });
+  });
+};

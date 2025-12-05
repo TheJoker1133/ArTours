@@ -1,7 +1,12 @@
+// src/routes/productosRoutes.js
 const express = require('express');
 const router = express.Router();
-const productosController = require('../controllers/productosController');
 const { authRequired } = require('../middlewares/auth');
+const productosController = require('../controllers/productosController');
+
+// 👉 Endpoint público para catálogo (sin auth)
+router.get('/public', productosController.publicList);
+
 
 router.get('/', authRequired, productosController.getAll);
 router.get('/:id', authRequired, productosController.getById);

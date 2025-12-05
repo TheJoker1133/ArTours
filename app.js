@@ -31,17 +31,16 @@ app.use(myconnection(mysql, {
   user: 'ArTours',
   password: 'Alejandro2025@',
   database: 'ArToursDB',
-  port: 3306 // cambia a 3307 si tu MySQL corre ahí
+  port: 3306
 }, 'single'));
 
-// Servir archivos estáticos (para auth.html)
+// Servir archivos estáticos (para auth.html y home.html)
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Ruta base
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'home.html'));
 });
-
 
 // Rutas de usuarios
 const usersRouter = require('./src/routes/users');
@@ -57,6 +56,7 @@ const productosRoutes = require('./src/routes/productosRoutes');
 app.use('/api/categorias', categoriasRoutes);
 app.use('/api/productos', productosRoutes);
 
+const ordenesRoutes = require('./src/routes/ordenesRoutes');
+app.use('/api/ordenes', ordenesRoutes);
 
-// Exportar app para server.js
 module.exports = app;
