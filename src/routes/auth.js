@@ -44,7 +44,7 @@ router.post('/login', (req, res) => {
           rol: usuario.rol
         };
 
-        // 🔥 Token JWT (para autenticación de backend tipo Postman / frontend SPA)
+
         const token = jwt.sign(
           {
             sub: usuario.id,

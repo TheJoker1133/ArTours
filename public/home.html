@@ -249,7 +249,7 @@
     </section>
   </main>
 
-  <script>
+    <script>
     const token = localStorage.getItem('token');
 
     // Tabs
@@ -364,18 +364,18 @@
         bloque.appendChild(grid);
         productosContainer.appendChild(bloque);
       });
-
-      // Evento de agregar al carrito
-      productosContainer.addEventListener('click', (e) => {
-        if (e.target.tagName === 'BUTTON') {
-          const id = parseInt(e.target.getAttribute('data-id'));
-          const nombre = e.target.getAttribute('data-nombre');
-          const precio = parseFloat(e.target.getAttribute('data-precio'));
-          agregarAlCarrito(id, nombre, precio);
-          activarTab('carrito');
-        }
-      }, { once: true });
     }
+
+    // 👇 Listener global UNA sola vez, sin { once: true }
+    productosContainer.addEventListener('click', (e) => {
+      if (e.target.tagName === 'BUTTON') {
+        const id = parseInt(e.target.getAttribute('data-id'));
+        const nombre = e.target.getAttribute('data-nombre');
+        const precio = parseFloat(e.target.getAttribute('data-precio'));
+        agregarAlCarrito(id, nombre, precio);
+        activarTab('carrito');
+      }
+    });
 
     function agregarAlCarrito(id_producto, nombre, precio) {
       const existente = carrito.find(item => item.id_producto === id_producto);
@@ -523,5 +523,6 @@
     // Cargar productos al entrar
     cargarProductos();
   </script>
+
 </body>
 </html>
